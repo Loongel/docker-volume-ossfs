@@ -1,4 +1,4 @@
-FROM golang:1.10-alpine as builder
+FROM golang:1.14.4-alpine3.12 as builder
 COPY . /go/src/github.com/fentas/docker-volume-davfs
 WORKDIR /go/src/github.com/fentas/docker-volume-davfs
 RUN set -ex \
@@ -8,7 +8,7 @@ RUN set -ex \
     && apk del .build-deps
 CMD ["/go/bin/docker-volume-davfs"]
 
-FROM alpine:3.7
+FROM alpine:3.12
 RUN apk add --no-cache davfs2
 RUN mkdir -p /run/docker/plugins /mnt/state /mnt/volumes
 RUN echo -e $'\
