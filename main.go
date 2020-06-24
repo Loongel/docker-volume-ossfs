@@ -321,7 +321,7 @@ func (d *davfsDriver) mountVolume(v *davfsVolume) error {
 	pidFile := fmt.Sprintf("/var/run/mount.davfs/mnt-volumes-%s.pid", v.Md5str)
 	mountCmd := cmd.String()
 	
-	cmd_full := exec.Command(fmt.Sprintf("kill -0 $(cat %s) > /dev/null 2>&1;if [ $? -ne 0 ];then rm %s -f && %s;fi", pidFile, pidFile, mountCmd)
+	cmd_full := exec.Command(fmt.Sprintf("kill -0 $(cat %s) > /dev/null 2>&1;if [ $? -ne 0 ];then rm %s -f && %s;fi", pidFile, pidFile, mountCmd))
 	
 	if u.User != nil {
 		username := u.User.Username()
