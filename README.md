@@ -10,7 +10,13 @@ This plugin allows you to mount remote folder using davfs2 in your container eas
 1 - Install the plugin
 
 ```sh
-docker plugin install loongel/vol-davfs # or docker plugin install fentas/davfs DEBUG=1
+docker plugin install loongel/vol-davfs
+```
+
+or
+
+```sh
+docker plugin install loongel/vol-davfs DEBUG=1
 ```
 
 2 - Create a volume
