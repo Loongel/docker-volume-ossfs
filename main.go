@@ -37,6 +37,7 @@ type davfsVolume struct {
 	Netdev   bool
 
 	Mountpoint  string
+	Md5str string
 	connections int
 }
 
@@ -135,6 +136,7 @@ func (d *davfsDriver) Create(r *volume.CreateRequest) error {
 		return logError("'url' option malformed")
 	}
 	v.Mountpoint = filepath.Join(d.root, fmt.Sprintf("%x", md5.Sum([]byte(v.URL))))
+	v.Md5str = fmt.Sprintf("%x", md5.Sum([]byte(v.URL)))
 
 	d.volumes[r.Name] = v
 	d.saveState()
@@ -275,7 +277,7 @@ func (d *davfsDriver) mountVolume(v *davfsVolume) error {
 		log.Fatal(err)
 	}
 	logrus.WithField("method", "mountVolume").WithField("variable", "url").Debugf("%#v", u)
-
+	
 	cmd := exec.Command("mount.davfs", fmt.Sprintf("%s://%s%s", u.Scheme, u.Host, u.Path), v.Mountpoint)
 
 	if v.Conf != "" {
@@ -313,17 +315,23 @@ func (d *davfsDriver) mountVolume(v *davfsVolume) error {
 	if v.Netdev {
 		cmd.Args = append(cmd.Args, "-o", "_netdev")
 	}
-
+	
+	logrus.Debug(cmd.Args)
+	
+	pidFile := fmt.Sprintf("/var/run/mount.davfs/mnt-volumes-%s.pid", v.Md5str)
+	mountCmd := cmd.String()
+	
+	cmd_full := exec.Command(fmt.Sprintf("kill -0 $(cat %s) > /dev/null 2>&1;if [ $? -ne 0 ];then rm %s -f && %s;fi", pidFile, pidFile, mountCmd)
+	
 	if u.User != nil {
 		username := u.User.Username()
 		password, _ := u.User.Password()
-		cmd.Stdin = strings.NewReader(fmt.Sprintf("%s\n%s", username, password))
+		cmd_full.Stdin = strings.NewReader(fmt.Sprintf("%s\n%s", username, password))
 	} else if v.Username != "" {
-		cmd.Stdin = strings.NewReader(fmt.Sprintf("%s\n%s", v.Username, v.Password))
+		cmd_full.Stdin = strings.NewReader(fmt.Sprintf("%s\n%s", v.Username, v.Password))
 	}
-
-	logrus.Debug(cmd.Args)
-	return cmd.Run()
+				 
+	return cmd_full.Run()
 }
 
 func (d *davfsDriver) unmountVolume(target string) error {
