@@ -319,7 +319,7 @@ func (d *davfsDriver) mountVolume(v *davfsVolume) error {
 	logrus.Debug(cmd.Args)
 	
 	pidFile := fmt.Sprintf("/var/run/mount.davfs/mnt-volumes-%s.pid", v.Md5str)
-	mountCmd = cmd.String()
+	mountCmd := cmd.String()
 	
 	cmd_full := exec.Command(fmt.Sprintf("kill -0 $(cat %s) > /dev/null 2>&1;if [ $? -ne 0 ];then rm %s -f && %s;fi", pidFile, pidFile, mountCmd))
 	
