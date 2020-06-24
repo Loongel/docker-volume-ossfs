@@ -1,4 +1,4 @@
-PLUGIN_NAME=loongel/davfs
+PLUGIN_NAME=loongel/docker-volume-davfs
 PLUGIN_TAG=latest
 
 DEV_DOCKER_IMAGE_NAME = docker-cli-dev$(IMAGE_TAG)
