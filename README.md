@@ -55,6 +55,13 @@ For more options refer to `mount.davfs --help`.
 ```
 $ docker run -it -v davVolumeName:<path> busybox ls <path>
 ```
+5- Push To Your Hub (After modified this plugin from code)
+The Makefile file shoud be modified if need.
+
+```sh
+git clone  https://github.com/Loongel/docker-volume-davfs
+cd docker-volume-davfs && make
+```
 
 ## Global `/etc/webdav/webdav.conf` atm.
 ```ini
