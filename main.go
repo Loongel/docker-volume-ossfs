@@ -18,9 +18,9 @@ import (
 	"github.com/docker/go-plugins-helpers/volume"
 )
 
-const socketAddress = "/run/docker/plugins/davfs.sock"
+const socketAddress = "/run/docker/plugins/ossfs.sock"
 
-type davfsVolume struct {
+type ossfsVolume struct {
 	URL      string
 	Username string
 	Password string
@@ -41,21 +41,21 @@ type davfsVolume struct {
 	connections int
 }
 
-type davfsDriver struct {
+type ossfsDriver struct {
 	sync.RWMutex
 
 	root      string
 	statePath string
-	volumes   map[string]*davfsVolume
+	volumes   map[string]*ossfsVolume
 }
 
-func newdavfsDriver(root string) (*davfsDriver, error) {
+func newossfsDriver(root string) (*ossfsDriver, error) {
 	logrus.WithField("method", "new driver").Debug(root)
 
-	d := &davfsDriver{
+	d := &ossfsDriver{
 		root:      filepath.Join(root, "volumes"),
-		statePath: filepath.Join(root, "state", "davfs-state.json"),
-		volumes:   map[string]*davfsVolume{},
+		statePath: filepath.Join(root, "state", "ossfs-state.json"),
+		volumes:   map[string]*ossfsVolume{},
 	}
 
 	data, err := ioutil.ReadFile(d.statePath)
@@ -74,7 +74,7 @@ func newdavfsDriver(root string) (*davfsDriver, error) {
 	return d, nil
 }
 
-func (d *davfsDriver) saveState() {
+func (d *ossfsDriver) saveState() {
 	data, err := json.Marshal(d.volumes)
 	if err != nil {
 		logrus.WithField("statePath", d.statePath).Error(err)
@@ -86,12 +86,12 @@ func (d *davfsDriver) saveState() {
 	}
 }
 
-func (d *davfsDriver) Create(r *volume.CreateRequest) error {
+func (d *ossfsDriver) Create(r *volume.CreateRequest) error {
 	logrus.WithField("method", "create").Debugf("%#v", r)
 
 	d.Lock()
 	defer d.Unlock()
-	v := &davfsVolume{}
+	v := &ossfsVolume{}
 
 	for key, val := range r.Options {
 		switch key {
@@ -144,7 +144,7 @@ func (d *davfsDriver) Create(r *volume.CreateRequest) error {
 	return nil
 }
 
-func (d *davfsDriver) Remove(r *volume.RemoveRequest) error {
+func (d *ossfsDriver) Remove(r *volume.RemoveRequest) error {
 	logrus.WithField("method", "remove").Debugf("%#v", r)
 
 	d.Lock()
@@ -166,7 +166,7 @@ func (d *davfsDriver) Remove(r *volume.RemoveRequest) error {
 	return nil
 }
 
-func (d *davfsDriver) Path(r *volume.PathRequest) (*volume.PathResponse, error) {
+func (d *ossfsDriver) Path(r *volume.PathRequest) (*volume.PathResponse, error) {
 	logrus.WithField("method", "path").Debugf("%#v", r)
 
 	d.RLock()
@@ -180,7 +180,7 @@ func (d *davfsDriver) Path(r *volume.PathRequest) (*volume.PathResponse, error) 
 	return &volume.PathResponse{Mountpoint: v.Mountpoint}, nil
 }
 
-func (d *davfsDriver) Mount(r *volume.MountRequest) (*volume.MountResponse, error) {
+func (d *ossfsDriver) Mount(r *volume.MountRequest) (*volume.MountResponse, error) {
 	logrus.WithField("method", "mount").Debugf("%#v", r)
 
 	d.Lock()
@@ -214,7 +214,7 @@ func (d *davfsDriver) Mount(r *volume.MountRequest) (*volume.MountResponse, erro
 	return &volume.MountResponse{Mountpoint: v.Mountpoint}, nil
 }
 
-func (d *davfsDriver) Unmount(r *volume.UnmountRequest) error {
+func (d *ossfsDriver) Unmount(r *volume.UnmountRequest) error {
 	logrus.WithField("method", "unmount").Debugf("%#v", r)
 
 	d.Lock()
@@ -236,7 +236,7 @@ func (d *davfsDriver) Unmount(r *volume.UnmountRequest) error {
 	return nil
 }
 
-func (d *davfsDriver) Get(r *volume.GetRequest) (*volume.GetResponse, error) {
+func (d *ossfsDriver) Get(r *volume.GetRequest) (*volume.GetResponse, error) {
 	logrus.WithField("method", "get").Debugf("%#v", r)
 
 	d.Lock()
@@ -250,7 +250,7 @@ func (d *davfsDriver) Get(r *volume.GetRequest) (*volume.GetResponse, error) {
 	return &volume.GetResponse{Volume: &volume.Volume{Name: r.Name, Mountpoint: v.Mountpoint}}, nil
 }
 
-func (d *davfsDriver) List() (*volume.ListResponse, error) {
+func (d *ossfsDriver) List() (*volume.ListResponse, error) {
 	logrus.WithField("method", "list").Debugf("")
 
 	d.Lock()
@@ -263,13 +263,13 @@ func (d *davfsDriver) List() (*volume.ListResponse, error) {
 	return &volume.ListResponse{Volumes: vols}, nil
 }
 
-func (d *davfsDriver) Capabilities() *volume.CapabilitiesResponse {
+func (d *ossfsDriver) Capabilities() *volume.CapabilitiesResponse {
 	logrus.WithField("method", "capabilities").Debugf("")
 
 	return &volume.CapabilitiesResponse{Capabilities: volume.Capability{Scope: "local"}}
 }
 
-func (d *davfsDriver) mountVolume(v *davfsVolume) error {
+func (d *ossfsDriver) mountVolume(v *ossfsVolume) error {
 	logrus.WithField("method", "mountVolume").Debugf("%#v", v)
 
 	u, err := url.Parse(v.URL)
@@ -278,7 +278,7 @@ func (d *davfsDriver) mountVolume(v *davfsVolume) error {
 	}
 	logrus.WithField("method", "mountVolume").WithField("variable", "url").Debugf("%#v", u)
 	
-	cmd := exec.Command("mount.davfs", fmt.Sprintf("%s://%s%s", u.Scheme, u.Host, u.Path), v.Mountpoint)
+	cmd := exec.Command("mount.ossfs", fmt.Sprintf("%s://%s%s", u.Scheme, u.Host, u.Path), v.Mountpoint)
 
 	if v.Conf != "" {
 		cmd.Args = append(cmd.Args, "-o", fmt.Sprintf("conf=%s", v.Conf))
@@ -318,7 +318,7 @@ func (d *davfsDriver) mountVolume(v *davfsVolume) error {
 	
 	logrus.Debug(cmd.Args)
 	
-	pidFile := fmt.Sprintf("/var/run/mount.davfs/mnt-volumes-%s.pid", v.Md5str)
+	pidFile := fmt.Sprintf("/var/run/mount.ossfs/mnt-volumes-%s.pid", v.Md5str)
 	mountCmd := cmd.String()
 	
 	cmd_full := exec.Command(fmt.Sprintf("kill -0 $(cat %s) > /dev/null 2>&1;if [ $? -ne 0 ];then rm %s -f && %s;fi", pidFile, pidFile, mountCmd))
@@ -334,7 +334,7 @@ func (d *davfsDriver) mountVolume(v *davfsVolume) error {
 	return cmd_full.Run()
 }
 
-func (d *davfsDriver) unmountVolume(target string) error {
+func (d *ossfsDriver) unmountVolume(target string) error {
 	cmd := fmt.Sprintf("umount %s", target)
 	logrus.Debug(cmd)
 	return exec.Command("sh", "-c", cmd).Run()
@@ -351,13 +351,13 @@ func main() {
 		logrus.SetLevel(logrus.DebugLevel)
 	}
 
-	// make sure "/etc/davfs2/secrets" is owned by root
-	err := os.Chown("/etc/davfs2/secrets", 0, 0)
+	// make sure "/etc/ossfs2/secrets" is owned by root
+	err := os.Chown("/etc/ossfs2/secrets", 0, 0)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	d, err := newdavfsDriver("/mnt")
+	d, err := newossfsDriver("/mnt")
 	if err != nil {
 		log.Fatal(err)
 	}
