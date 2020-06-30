@@ -5,12 +5,12 @@ import (
 	"flag"
 	"fmt"
 	"os"
-	"regexp"
-	"context"
+	//"regexp"
+	//"context"
 	"strings"
-	"bufio"
+	//"bufio"
 	//"github.com/go-ini/ini"
-	"github.com/docker/docker/client"
+	//"github.com/docker/docker/client"
 	"github.com/docker/go-plugins-helpers/volume"
 )
 const socketAddress = "/run/docker/plugins/ossfs.sock"
@@ -42,7 +42,7 @@ var (
 	debug  = flag.Bool("debug", false, "print debug info on console with value true")
 )
 
-//type OssDef map[string]string
+type OssDef map[string]string
 //var ossDefItems = []string{"endpoint", "accesskeyid", "accesskeysecret"}
 func main() {
 	drvn := socketAddress	

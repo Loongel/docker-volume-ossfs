@@ -15,7 +15,7 @@ import (
 	"os/exec"
 	"io/ioutil"
 	"github.com/aliyun/aliyun-oss-go-sdk/oss"
-	"github.com/Sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 	"github.com/docker/go-plugins-helpers/volume"
 )
 
@@ -173,7 +173,7 @@ func (d ALiOssVolumeDriver) Create(req *volume.CreateRequest) error {
 	if err != nil {
 		fmt.Printf("%c[1;0;31merror: create oss client fail by oss define \"%s\"!%c[0m\n",0x1B, name_ref, 0x1B)
 	}else{
-		clients[name_ref] = client;
+		d.clients[name_ref] = client;
 	}
 
 	return d.BuildVolume(req.Name, name_ref, bucket, path, false)
