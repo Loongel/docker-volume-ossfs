@@ -126,15 +126,18 @@ func (d ALiOssVolumeDriver) Create(req *volume.CreateRequest) error {
 
 	name_ref := req.Options["name-ref"]
 	
-	if debugFlg {
-		fmt.Printf("%c[1;0;31mINFO: req.Options[name-ref] Create volume: %s%c[0m\n",0x1B, req.Options["name-ref"], 0x1B)
-		fmt.Printf("%c[1;0;31mINFO: req.Name Create volume: %s%c[0m\n",0x1B, req.Name, 0x1B)
-	}		
+	fmt.Printf("%c[1;0;31mINFO: req.Options[name-ref] Create volume: %s%c[0m\n",0x1B, req.Options["name-ref"], 0x1B)
+	fmt.Printf("%c[1;0;31mINFO: req.Name Create volume: %s%c[0m\n",0x1B, req.Name, 0x1B)
+	
+	var a = fmt.Sprintf("%c[1;0;31mINFO: req.Options[name-ref] Create volume: %s%c[0m\n",0x1B, req.Options["name-ref"], 0x1B)
+	var b = fmt.Sprintf("%c[1;0;31mINFO: req.Name Create volume: %s%c[0m\n",0x1B, req.Name, 0x1B)
+	
 		
+
 	if name_ref == "" {
 		var msg = "name-ref can't be nil!"
 		fmt.Printf("%c[1;0;31merror: Create volume: %s%c[0m\n",0x1B, msg, 0x1B)
-		return errors.New(msg)
+		return errors.New(msg+a+b)
 	}
 	
 	endpoint := req.Options["endpoint"]
