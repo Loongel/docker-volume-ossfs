@@ -45,6 +45,7 @@ type VolumeStorage struct {
 	Scope		string	
 }
 
+var debug = true
 const ossfsRoot = "/var/lib/ossfs/volumes"	// The fact mount path arg for ossfs program in plugin env   
 //func NewALiOssVolumeDriver(mount string, driver string, ossDef map[string]OssDef, debug bool) volume.Driver {
 
@@ -123,42 +124,48 @@ func NewALiOssVolumeDriver(mount string, driver string, debug bool) volume.Drive
 
 func (d ALiOssVolumeDriver) Create(req *volume.CreateRequest) error {
 
-	name_ref, _ := req.Options["name-ref"]
+	name_ref := req.Options["name-ref"]
+	
+	if debug {
+		fmt.Printf("%c[1;0;31mINFO: req.Options["name-ref"] Create volume: %s%c[0m\n",0x1B, req.Options["name-ref"], 0x1B)
+		fmt.Printf("%c[1;0;31mINFO: req.Name Create volume: %s%c[0m\n",0x1B, req.Name, 0x1B)
+	}		
+		
 	if name_ref == "" {
 		var msg = "name-ref can't be nil!"
 		fmt.Printf("%c[1;0;31merror: Create volume: %s%c[0m\n",0x1B, msg, 0x1B)
 		return errors.New(msg)
 	}
 	
-	endpoint, _ := req.Options["endpoint"]
+	endpoint := req.Options["endpoint"]
 	if endpoint == "" {
 		var msg = "endpoint can't be nil!"
 		fmt.Printf("%c[1;0;31merror: Create volume: %s%c[0m\n",0x1B, msg, 0x1B)
 		return errors.New(msg)
 	}
 	
-	ak, _ := req.Options["ak"]
+	ak := req.Options["ak"]
 	if ak == "" {
 		var msg = "AccessKey_ID can't be nil!"
 		fmt.Printf("%c[1;0;31merror: Create volume: %s%c[0m\n",0x1B, msg, 0x1B)
 		return errors.New(msg)
 	}
 
-	sk, _ := req.Options["sk"]
+	sk := req.Options["sk"]
 	if sk == "" {
 		var msg = "AccessKey_Secret can't be nil!"
 		fmt.Printf("%c[1;0;31merror: Create volume: %s%c[0m\n",0x1B, msg, 0x1B)
 		return errors.New(msg)
 	}
 	
-	bucket, _ := req.Options["bucket"]
+	bucket := req.Options["bucket"]
 	if bucket == "" {
 		var msg = "oss's bucket can't be nil"
 		fmt.Printf("%c[1;0;31merror: Create volume: %s%c[0m\n",0x1B, msg, 0x1B)
 		return errors.New(msg)
 	}
 		
-    path, _ := req.Options["path"]
+    path := req.Options["path"]
 	if path == "" {
 		path = "/"
 	}

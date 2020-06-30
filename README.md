@@ -10,32 +10,45 @@ This plugin allows you to mount remote folder using ossfs2 in your container eas
 1 - Install the plugin
 
 ```sh
-docker plugin install loongel/vol-ossfs
+echo "y" | docker plugin install loongel/vol-ossfs
+
 ```
 
 or
 
 ```sh
-docker plugin install loongel/vol-ossfs DEBUG=1
+echo "y" | docker plugin install loongel/vol-ossfs DEBUG=1
+
 ```
 
 2 - Create a volume
 
 ```sh
-$ docker volume create \
+docker volume create \
   -d loongel/vol-ossfs \
-  -o url=<https://user:passwd@host/path> \
-  -o uid=1000 -o gid=1000 davVolumeName
+  -o name_ref=<conf_name> \
+  -o endpoint=<endpoint> \
+  -o ak=<AccessKey_ID> \
+  -o sk=<AccessKey_Secret> \
+  -o bucket=<bucket> \
+  -o path=<path> \
+  ossVolumeName
+  
 ```
-or
+
+example
 
 ```sh
-$ docker volume create \
+docker volume create \
   -d loongel/vol-ossfs \
-  -o url=<https://host/path> \
-  -o uid=1000 -o gid=1000 \
-  -o username=<user> \
-  -o password=<password> davVolumeName
+  -o name_ref="dev_player" \
+  -o endpoint="oss-us-west-1.aliyuncs.com" \
+  -o ak="LTAI4G25CMiJQ699UJmgv6jR" \
+  -o sk="Ixb8rtEEQloCi7VkviQV7ESB6gI54l" \
+  -o bucket="data-persistent" \
+  -o path="/" \
+  persistData_OSS
+  
 ```
 
 3 - Check a volume
