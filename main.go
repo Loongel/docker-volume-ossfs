@@ -10,7 +10,7 @@ import (
 	"strings"
 	"bufio"
 	//"github.com/go-ini/ini"
-	"github.com/moby/moby/client"
+	"github.com/docker/docker/client"
 	"github.com/docker/go-plugins-helpers/volume"
 )
 const socketAddress = "/run/docker/plugins/ossfs.sock"
