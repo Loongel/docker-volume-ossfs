@@ -67,6 +67,7 @@ The Makefile file shoud be modified if need.
 ```sh
 git clone  https://github.com/Loongel/docker-volume-ossfs
 cd docker-volume-ossfs && make
+
 ```
 
 ## Global `/etc/webdav/webdav.conf` atm.
