@@ -45,7 +45,7 @@ type VolumeStorage struct {
 	Scope		string	
 }
 
-var debug = true
+var debugFlg = true
 const ossfsRoot = "/var/lib/ossfs/volumes"	// The fact mount path arg for ossfs program in plugin env   
 //func NewALiOssVolumeDriver(mount string, driver string, ossDef map[string]OssDef, debug bool) volume.Driver {
 
@@ -126,8 +126,8 @@ func (d ALiOssVolumeDriver) Create(req *volume.CreateRequest) error {
 
 	name_ref := req.Options["name-ref"]
 	
-	if debug {
-		fmt.Printf("%c[1;0;31mINFO: req.Options["name-ref"] Create volume: %s%c[0m\n",0x1B, req.Options["name-ref"], 0x1B)
+	if debugFlg {
+		fmt.Printf("%c[1;0;31mINFO: req.Options[name-ref] Create volume: %s%c[0m\n",0x1B, req.Options["name-ref"], 0x1B)
 		fmt.Printf("%c[1;0;31mINFO: req.Name Create volume: %s%c[0m\n",0x1B, req.Name, 0x1B)
 	}		
 		
