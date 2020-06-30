@@ -126,6 +126,11 @@ func (d ALiOssVolumeDriver) Create(req *volume.CreateRequest) error {
 
 	name_ref := req.Options["name-ref"]
 	
+	
+	mjson,_ :=json.Marshal(req.Options)
+	mString :=string(mjson)
+
+
 	fmt.Printf("%c[1;0;31mINFO: req.Options[name-ref] Create volume: %s%c[0m\n",0x1B, req.Options["name-ref"], 0x1B)
 	fmt.Printf("%c[1;0;31mINFO: req.Name Create volume: %s%c[0m\n",0x1B, req.Name, 0x1B)
 	
@@ -137,7 +142,7 @@ func (d ALiOssVolumeDriver) Create(req *volume.CreateRequest) error {
 	if name_ref == "" {
 		var msg = "name-ref can't be nil!"
 		fmt.Printf("%c[1;0;31merror: Create volume: %s%c[0m\n",0x1B, msg, 0x1B)
-		return errors.New(msg+a+b)
+		return errors.New(msg + a + b + mString)
 	}
 	
 	endpoint := req.Options["endpoint"]
