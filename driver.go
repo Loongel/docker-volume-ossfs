@@ -222,7 +222,14 @@ func (d ALiOssVolumeDriver) BuildVolume(name string, client_name string, bucket 
 		otx := strings.Replace(strings.Replace(strings.Replace(tos, "[", "", -1), "]", "", -1), "\"Options\": null", umx, -1)		
     		f.WriteString(otx)
 	}()	
-	d.volumes[name] = &VolumeInfo{ path: path, bucket: bkt, client_name: client_name }
+	
+	var keyPath =""
+	if path[0] != "/"[0]{
+		keyPath = "/" + path
+	}else{ keyPath = path }
+	
+	d.volumes[name] = &VolumeInfo{ path: keyPath, bucket: bkt, client_name: client_name }
+	
 	
 	dfm := "Create"
 	if isLoad {
@@ -297,7 +304,7 @@ func (d ALiOssVolumeDriver) Remove(r *volume.RemoveRequest) error {
 		if d.debug {
 			fmt.Printf("current is the last volume of the mount %s, now ready to unmount %s!\n", vi.client_name, vi.client_name)
 		}
-                bkn := vi.bucket.BucketName
+                bkn := vi.bucket.BucketName + vi.path
                 pkp := filepath.Join(ossfsRoot, ToMd5(bkn))
                 
                 tos, _ = ExecuteCmd("mountpoint " + pkp, 3, d.debug)
@@ -334,16 +341,17 @@ func (d ALiOssVolumeDriver) Mount(r *volume.MountRequest) (*volume.MountResponse
 	logrus.Info("Mount volume ", r.Name)
 	vi, ok := d.volumes[r.Name]
 	
-	viJson,_ :=json.Marshal(vi)
+	viJson,_ :=json.Marshal(*vi)
 	viStr :=string(viJson)	
 	logrus.Info("d.volumes[r.Name]: ", viStr)
+	
 	
 	if !ok {
 		return &volume.MountResponse{},errors.New(r.Name + " not exists")
 	}
 	d.mutex.Lock()
 	defer d.mutex.Unlock()
-	bkn := vi.bucket.BucketName
+	bkn := vi.bucket.BucketName + vi.path
 	logrus.Info("bucket.BucketName: ", bkn)
     pkp := filepath.Join(ossfsRoot, ToMd5(bkn))
 
