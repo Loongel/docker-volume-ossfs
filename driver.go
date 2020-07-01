@@ -91,9 +91,9 @@ func NewALiOssVolumeDriver(mount string, driver string, debug bool) volume.Drive
 		      	// continue
 		// }
 		// if debug {
-			// fmt.Printf("restore %s--->name: [%s]	 name_ref: [%s]	bucket: [%s]	path: [%s]\n", fn, dv.Name, dv.Options["name-ref"], dv.Options["bucket"], dv.Options["path"])
+			// fmt.Printf("restore %s--->name: [%s]	 name_ref: [%s]	bucket: [%s]	path: [%s]\n", fn, dv.Name, dv.Options["name_ref"], dv.Options["bucket"], dv.Options["path"])
 		// }
-		// err = d.BuildVolume(dv.Name, dv.Options["name-ref"], dv.Options["bucket"], dv.Options["path"], true)
+		// err = d.BuildVolume(dv.Name, dv.Options["name_ref"], dv.Options["bucket"], dv.Options["path"], true)
 		// if debug {
 			// if err == nil {
 				// fmt.Printf("		[ok]\n")
@@ -124,51 +124,45 @@ func NewALiOssVolumeDriver(mount string, driver string, debug bool) volume.Drive
 
 func (d ALiOssVolumeDriver) Create(req *volume.CreateRequest) error {
 
-	name_ref := req.Options["name-ref"]
-	
-	fmt.Printf("%c[1;0;31mINFO: req.Options[name-ref] Create volume: %s%c[0m\n",0x1B, req.Options["name-ref"], 0x1B)
-	fmt.Printf("%c[1;0;31mINFO: req.Name Create volume: %s%c[0m\n",0x1B, req.Name, 0x1B)
-	
-	var a = fmt.Sprintf("%c[1;0;31mINFO: req.Options[name-ref] Create volume: %s%c[0m\n",0x1B, req.Options["name-ref"], 0x1B)
-	var b = fmt.Sprintf("%c[1;0;31mINFO: req.Name Create volume: %s%c[0m\n",0x1B, req.Name, 0x1B)
-	
-		
+	optionsJson,_ :=json.Marshal(req.Options)
+	optionsStr :=string(mjson)
 
+	name_ref := req.Options["name_ref"]		
 	if name_ref == "" {
-		var msg = "name-ref can't be nil!"
+		var msg = "name_ref can't be nil!"
 		fmt.Printf("%c[1;0;31merror: Create volume: %s%c[0m\n",0x1B, msg, 0x1B)
-		return errors.New(msg+a+b)
+		return errors.New(msg + "\n" + optionsStr)
 	}
 	
-	endpoint := req.Options["endpoint"]
+	//endpoint := req.Options["endpoint"]
 	if endpoint == "" {
 		var msg = "endpoint can't be nil!"
 		fmt.Printf("%c[1;0;31merror: Create volume: %s%c[0m\n",0x1B, msg, 0x1B)
 		return errors.New(msg)
 	}
 	
-	ak := req.Options["ak"]
+	//ak := req.Options["ak"]
 	if ak == "" {
 		var msg = "AccessKey_ID can't be nil!"
 		fmt.Printf("%c[1;0;31merror: Create volume: %s%c[0m\n",0x1B, msg, 0x1B)
 		return errors.New(msg)
 	}
 
-	sk := req.Options["sk"]
+	//sk := req.Options["sk"]
 	if sk == "" {
 		var msg = "AccessKey_Secret can't be nil!"
 		fmt.Printf("%c[1;0;31merror: Create volume: %s%c[0m\n",0x1B, msg, 0x1B)
 		return errors.New(msg)
 	}
 	
-	bucket := req.Options["bucket"]
+	//bucket := req.Options["bucket"]
 	if bucket == "" {
 		var msg = "oss's bucket can't be nil"
 		fmt.Printf("%c[1;0;31merror: Create volume: %s%c[0m\n",0x1B, msg, 0x1B)
 		return errors.New(msg)
 	}
 		
-    path := req.Options["path"]
+    //path := req.Options["path"]
 	if path == "" {
 		path = "/"
 	}
@@ -205,7 +199,7 @@ func (d ALiOssVolumeDriver) BuildVolume(name string, name_ref string, bucket str
 			// if len(nvs) >=2 {
 				// na := strings.Trim(nvs[0], " ")
 				// va := strings.Trim(nvs[1], " ")
-				// if na == "name-ref" {
+				// if na == "name_ref" {
 					// name_ref = va
 				// }else if na == "bucket" {
 					// bucket = va
@@ -223,7 +217,7 @@ func (d ALiOssVolumeDriver) BuildVolume(name string, name_ref string, bucket str
 	// }
 	
 	// if name_ref == "" {
-		// var msg = "name-ref can't be nil!"
+		// var msg = "name_ref can't be nil!"
 		// fmt.Printf("%c[1;0;31merror: Create volume: %s%c[0m\n",0x1B, msg, 0x1B)
 		// return errors.New(msg)
 	// }
@@ -302,7 +296,7 @@ func (d ALiOssVolumeDriver) BuildVolume(name string, name_ref string, bucket str
 			f.Close()
 			ExecuteCmd("chmod 110 " + fp, 1, d.debug)
 		}()
-		umx := fmt.Sprintf("\"Options\": {\n            \"bucket\": \"%s\",\n            \"name-ref\": \"%s\",\n            \"path\": \"%s\"\n        }", bucket, name_ref, path)
+		umx := fmt.Sprintf("\"Options\": {\n            \"bucket\": \"%s\",\n            \"name_ref\": \"%s\",\n            \"path\": \"%s\"\n        }", bucket, name_ref, path)
 		otx := strings.Replace(strings.Replace(strings.Replace(tos, "[", "", -1), "]", "", -1), "\"Options\": null", umx, -1)		
     		f.WriteString(otx)
 	}()	
@@ -366,7 +360,7 @@ func (d ALiOssVolumeDriver) Remove(r *volume.RemoveRequest) error {
 		return errors.New(r.Name + " not exists")
 	}
 	go func(){
-		tos, _ := ExecuteCmd(fmt.Sprintf("find %s/*/opts.json | xargs grep -El '\"Driver\": \"%s\" | \"name-ref\": \"%s\"' | wc -l", d.mount, d.driver,vi.name_ref), 1, d.debug)
+		tos, _ := ExecuteCmd(fmt.Sprintf("find %s/*/opts.json | xargs grep -El '\"Driver\": \"%s\" | \"name_ref\": \"%s\"' | wc -l", d.mount, d.driver,vi.name_ref), 1, d.debug)
 		reg := regexp.MustCompile(`\D+`)
 		ufx := reg.ReplaceAllString(tos, "")
 		cnt, err := strconv.ParseInt(ufx, 10, 32)
