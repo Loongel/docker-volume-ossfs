@@ -184,16 +184,20 @@ func (d ALiOssVolumeDriver) BuildVolume(name string, name_ref string, bucket str
 	if _, ok := d.volumes[name]; ok {
                 return nil
         }
-	ok, err = bkt.IsObjectExist(path)
-	if !ok {
-		err := bkt.PutObject(path, strings.NewReader(""))
-		if err != nil {
-			var msg = fmt.Sprintf("create path of %s fail in bucket of %s on client of %s!", path, bucket, name_ref)
-			fmt.Printf("%c[1;0;31merror:  Create volume: %s%c[0m\n",0x1B, msg, 0x1B)
-    	                panic(err)
-    	                return errors.New(msg)
+		
+	if path != string(os.PathSeparator){
+		ok, err = bkt.IsObjectExist(path)
+		if !ok {
+			err := bkt.PutObject(path, strings.NewReader(""))
+			if err != nil {
+				var msg = fmt.Sprintf("create path of %s fail in bucket of %s on client of %s!", path, bucket, name_ref)
+				fmt.Printf("%c[1;0;31merror:  Create volume: %s%c[0m\n",0x1B, msg, 0x1B)
+							panic(err)
+							return errors.New(msg)
+			}
 		}
 	}
+
 	af := d.mountpoint(name, false)
 	if !IsExist(af) {
 		 os.MkdirAll(af, os.ModePerm)
