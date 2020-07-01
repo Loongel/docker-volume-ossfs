@@ -21,7 +21,7 @@ import (
 
 type VolumeInfo struct {
 	path 		string
-	name_ref	string
+	client_name	string
 	bucket		*oss.Bucket
 }
 
@@ -47,6 +47,7 @@ type VolumeStorage struct {
 
 var debugFlg = true
 const ossfsRoot = "/var/lib/ossfs/volumes"	// The fact mount path arg for ossfs program in plugin env   
+
 
 func NewALiOssVolumeDriver(mount string, driver string, debug bool) volume.Driver {
 	clients	:= make(map[string]*oss.Client)
@@ -84,8 +85,8 @@ func (d ALiOssVolumeDriver) Create(req *volume.CreateRequest) error {
 	optionsJson,_ :=json.Marshal(req.Options)
 	optionsStr :=string(optionsJson)
 
-	name_ref := req.Options["name_ref"]		
-	if name_ref == "" {
+	client_name := req.Options["name_ref"]		
+	if client_name == "" {
 		var msg = "name_ref can't be nil!"
 		fmt.Printf("%c[1;0;31merror: Create volume: %s%c[0m\n",0x1B, msg, 0x1B)
 		return errors.New(msg + "\n" + optionsStr)
@@ -145,25 +146,25 @@ func (d ALiOssVolumeDriver) Create(req *volume.CreateRequest) error {
 	
 	client, err := oss.New(endpoint, ak, sk)
 	if err != nil {
-		fmt.Printf("%c[1;0;31merror: create oss client fail by oss define \"%s\"!%c[0m\n",0x1B, name_ref, 0x1B)
+		fmt.Printf("%c[1;0;31merror: create oss client fail by oss define \"%s\"!%c[0m\n",0x1B, client_name, 0x1B)
 	}else{
-		d.clients[name_ref] = client;
+		d.clients[client_name] = client;
 	}
 
-	return d.BuildVolume(req.Name, name_ref, bucket, path, false)
+	return d.BuildVolume(req.Name, client_name, bucket, path, false)
 }
 
-func (d ALiOssVolumeDriver) BuildVolume(name string, name_ref string, bucket string, path string, isLoad bool) error{
+func (d ALiOssVolumeDriver) BuildVolume(name string, client_name string, bucket string, path string, isLoad bool) error{
 	
-	client, ok := d.clients[name_ref]
+	client, ok := d.clients[client_name]
 	if client == nil || !ok {
-		var msg = fmt.Sprintf("oss client of %s not exists!", name_ref)
+		var msg = fmt.Sprintf("oss client of %s not exists!", client_name)
 		fmt.Printf("%c[1;0;31merror: Create volume: %s%c[0m\n",0x1B, msg, 0x1B)
 		return errors.New(msg)
 	}
 	ok, err := client.IsBucketExist(bucket)
 	if !ok {
-		var msg = fmt.Sprintf("the bucket of %s not exists in client %s!", bucket, name_ref)
+		var msg = fmt.Sprintf("the bucket of %s not exists in client %s!", bucket, client_name)
 		fmt.Printf("%c[1;0;31merror:  Create volume: %s%c[0m\n", 0x1B, msg, 0x1B)
 		if err != nil {
 			panic(err)
@@ -173,11 +174,11 @@ func (d ALiOssVolumeDriver) BuildVolume(name string, name_ref string, bucket str
 	
 	bkt, err := client.Bucket(bucket)
 	if bkt == nil || err != nil {
-		var msg = fmt.Sprintf("the bucket of %s not exists in client %s!", bucket, name_ref)
+		var msg = fmt.Sprintf("the bucket of %s not exists in client %s!", bucket, client_name)
                 fmt.Printf("%c[1;0;31merror:  Create volume: %s%c[0m\n",0x1B, msg, 0x1B)
                 panic(err)
                 return errors.New(msg)
-        }		
+        }
 
 	d.mutex.Lock()
 	defer d.mutex.Unlock()
@@ -190,7 +191,7 @@ func (d ALiOssVolumeDriver) BuildVolume(name string, name_ref string, bucket str
 		if !ok {
 			err := bkt.PutObject(path, strings.NewReader(""))
 			if err != nil {
-				var msg = fmt.Sprintf("create path of %s fail in bucket of %s on client of %s!", path, bucket, name_ref)
+				var msg = fmt.Sprintf("create path of %s fail in bucket of %s on client of %s!", path, bucket, client_name)
 				fmt.Printf("%c[1;0;31merror:  Create volume: %s%c[0m\n",0x1B, msg, 0x1B)
 							panic(err)
 							return errors.New(msg)
@@ -217,17 +218,17 @@ func (d ALiOssVolumeDriver) BuildVolume(name string, name_ref string, bucket str
 			f.Close()
 			ExecuteCmd("chmod 110 " + fp, 1, d.debug)
 		}()
-		umx := fmt.Sprintf("\"Options\": {\n            \"bucket\": \"%s\",\n            \"name_ref\": \"%s\",\n            \"path\": \"%s\"\n        }", bucket, name_ref, path)
+		umx := fmt.Sprintf("\"Options\": {\n            \"bucket\": \"%s\",\n            \"name_ref\": \"%s\",\n            \"path\": \"%s\"\n        }", bucket, client_name, path)
 		otx := strings.Replace(strings.Replace(strings.Replace(tos, "[", "", -1), "]", "", -1), "\"Options\": null", umx, -1)		
     		f.WriteString(otx)
 	}()	
-	d.volumes[name] = &VolumeInfo{ path: path, bucket: bkt, name_ref: name_ref }
+	d.volumes[name] = &VolumeInfo{ path: path, bucket: bkt, client_name: client_name }
 	
 	dfm := "Create"
 	if isLoad {
 		dfm = "Load"
 	}
-	fmt.Printf("%s the volume of %s point to %s in bucket of %s in client of %s success!\n", dfm, name, path, bucket, name_ref)
+	fmt.Printf("%s the volume of %s point to %s in bucket of %s in client of %s success!\n", dfm, name, path, bucket, client_name)
 	
 	d.saveState()
 	
@@ -281,7 +282,7 @@ func (d ALiOssVolumeDriver) Remove(r *volume.RemoveRequest) error {
 		return errors.New(r.Name + " not exists")
 	}
 	go func(){
-		tos, _ := ExecuteCmd(fmt.Sprintf("find %s/*/opts.json | xargs grep -El '\"Driver\": \"%s\" | \"name_ref\": \"%s\"' | wc -l", d.mount, d.driver,vi.name_ref), 1, d.debug)
+		tos, _ := ExecuteCmd(fmt.Sprintf("find %s/*/opts.json | xargs grep -El '\"Driver\": \"%s\" | \"client_name\": \"%s\"' | wc -l", d.mount, d.driver,vi.client_name), 1, d.debug)
 		reg := regexp.MustCompile(`\D+`)
 		ufx := reg.ReplaceAllString(tos, "")
 		cnt, err := strconv.ParseInt(ufx, 10, 32)
@@ -294,7 +295,7 @@ func (d ALiOssVolumeDriver) Remove(r *volume.RemoveRequest) error {
 			return
 		}
 		if d.debug {
-			fmt.Printf("current is the last volume of the mount %s, now ready to unmount %s!\n", vi.name_ref, vi.name_ref)
+			fmt.Printf("current is the last volume of the mount %s, now ready to unmount %s!\n", vi.client_name, vi.client_name)
 		}
                 bkn := vi.bucket.BucketName
                 pkp := filepath.Join(ossfsRoot, ToMd5(bkn))
@@ -332,13 +333,19 @@ func (d ALiOssVolumeDriver) Path(r *volume.PathRequest) (*volume.PathResponse,er
 func (d ALiOssVolumeDriver) Mount(r *volume.MountRequest) (*volume.MountResponse,error) {
 	logrus.Info("Mount volume ", r.Name)
 	vi, ok := d.volumes[r.Name]
+	
+	viJson,_ :=json.Marshal(vi)
+	viStr :=string(viJson)	
+	logrus.Info("d.volumes[r.Name]: ", viStr)
+	
 	if !ok {
 		return &volume.MountResponse{},errors.New(r.Name + " not exists")
 	}
 	d.mutex.Lock()
 	defer d.mutex.Unlock()
 	bkn := vi.bucket.BucketName
-        pkp := filepath.Join(ossfsRoot, ToMd5(bkn))
+	logrus.Info("bucket.BucketName: ", bkn)
+    pkp := filepath.Join(ossfsRoot, ToMd5(bkn))
 
 	tos, _ := ExecuteCmd("mountpoint " + pkp, 1, d.debug);
 	if !(strings.Contains(tos, "is a mountpoint") || strings.Contains(tos, "是一个挂载点")){
