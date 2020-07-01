@@ -254,14 +254,22 @@ func (d ALiOssVolumeDriver) BuildVolume(name string, name_ref string, bucket str
                 panic(err)
                 return errors.New(msg)
         }
+		
+	// oss bucket path handle
 	reg := regexp.MustCompile(`[/\\]+`)
 	path = reg.ReplaceAllString(path, string(os.PathSeparator))
-	if path[0] == os.PathSeparator {
-		path = path[1: len(path)]
+	fmt.Printf("%c[1;0;31minfo: path_pre_handel Create volume: %s%c[0m\n",0x1B, path, 0x1B)
+	
+	if path != string(os.PathSeparator) {
+		if path[0] == os.PathSeparator {
+			path = path[1: len(path)]
+		}
+		if path[len(path)-1] != os.PathSeparator {
+			path = path + string(os.PathSeparator)
+		}
 	}
-	if path[len(path)-1] != os.PathSeparator {
-		path = path + string(os.PathSeparator)
-	}
+	fmt.Printf("%c[1;0;31minfo: path_post_handel Create volume: %s%c[0m\n",0x1B, path, 0x1B)
+
 	d.mutex.Lock()
 	defer d.mutex.Unlock()
 	if _, ok := d.volumes[name]; ok {
