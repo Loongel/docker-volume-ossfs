@@ -47,18 +47,10 @@ type VolumeStorage struct {
 
 var debugFlg = true
 const ossfsRoot = "/var/lib/ossfs/volumes"	// The fact mount path arg for ossfs program in plugin env   
-//func NewALiOssVolumeDriver(mount string, driver string, ossDef map[string]OssDef, debug bool) volume.Driver {
 
 func NewALiOssVolumeDriver(mount string, driver string, debug bool) volume.Driver {
 	clients	:= make(map[string]*oss.Client)
-	// for name, def := range ossDef {
-		// client, err := oss.New(def["endpoint"], def["accesskeyid"], def["accesskeysecret"])
-		// if err != nil {
-			// fmt.Printf("%c[1;0;31merror: create oss client fail by oss define \"%s\"!%c[0m\n",0x1B, name, 0x1B)
-			// continue;
-		// }
-		// clients[name] = client;
-	// }
+
 	var d = ALiOssVolumeDriver{
 		debug:	    debug,
 		driver:	    driver,
@@ -68,42 +60,7 @@ func NewALiOssVolumeDriver(mount string, driver string, debug bool) volume.Drive
 		mount:      mount,
 		statePath:	filepath.Join(mount, "state", "ossfs-state.json"),
 	}
-	// if len(ossDef) <= 0 {
-		// fmt.Printf("%c[1;0;31merror: has none oss define!%c[0m\n",0x1B, 0x1B)
-		// return d
-	// }
-	
-	// fp := filepath.Join(mount, "*/opts.json")
-	
-	// tos, _ := ExecuteCmd(fmt.Sprintf("find %s | xargs grep -l '\"Driver\": \"%s\"'", fp, driver), 1, d.debug)
-	// cfgs := strings.Split(strings.Trim(tos, " "), "\n")
-	// for _, fn := range cfgs {
-		// fn = strings.Trim(fn, " ")
-		// data, err := ioutil.ReadFile(fn)
-		// if err != nil {
-		     	// continue
-		// }
-				
-		// dv := VolumeStorage{}
-		// err = json.Unmarshal(data, &dv)
-   		// if err != nil {
-			// fmt.Printf("error: %v", err)
-		      	// continue
-		// }
-		// if debug {
-			// fmt.Printf("restore %s--->name: [%s]	 name_ref: [%s]	bucket: [%s]	path: [%s]\n", fn, dv.Name, dv.Options["name_ref"], dv.Options["bucket"], dv.Options["path"])
-		// }
-		// err = d.BuildVolume(dv.Name, dv.Options["name_ref"], dv.Options["bucket"], dv.Options["path"], true)
-		// if debug {
-			// if err == nil {
-				// fmt.Printf("		[ok]\n")
-			// }else{
-				// fmt.Printf("		[fail]\n")
-			// }
-		// }
-	// }
-	
-	
+
 	data, err := ioutil.ReadFile(d.statePath)
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -165,7 +122,20 @@ func (d ALiOssVolumeDriver) Create(req *volume.CreateRequest) error {
     path := req.Options["path"]
 	if path == "" {
 		path = "/"
+	}	
+	// oss bucket path handle
+	path = regexp.MustCompile(`[/\\]+`).ReplaceAllString(path, string(os.PathSeparator))
+	fmt.Printf("%c[1;0;31minfo: path_pre_handel Create volume: %s%c[0m\n",0x1B, path, 0x1B)	
+	if path != string(os.PathSeparator) {
+		if path[0] == os.PathSeparator {
+			path = path[1: len(path)]
+		}
+		if path[len(path)-1] != os.PathSeparator {
+			path = path + string(os.PathSeparator)
+		}
 	}
+	fmt.Printf("%c[1;0;31minfo: path_post_handel Create volume: %s%c[0m\n",0x1B, path, 0x1B)
+
 	
 	if req.Name == "" {
 		var msg = "volume name can't be nil!---2"
@@ -184,52 +154,6 @@ func (d ALiOssVolumeDriver) Create(req *volume.CreateRequest) error {
 }
 
 func (d ALiOssVolumeDriver) BuildVolume(name string, name_ref string, bucket string, path string, isLoad bool) error{
-	// if name == "" {
-		// var msg = "volume name can't be nil---1"
-		// fmt.Printf("%c[1;0;31merror: Create volume: %s%c[0m\n",0x1B, msg, 0x1B)
-		// return errors.New(msg)
-	// }
-	// m := strings.Index(name, "[");
-	// n := strings.Index(name, "]");
-	// if m != -1 && n != -1 && n > m {
-		// val := strings.Trim(name[m + 1: n], " ")
-		// itms := strings.Split(val, ",")
-		// for _, itm := range itms {
-			// nvs := strings.Split(strings.Trim(itm, " "), "=")
-			// if len(nvs) >=2 {
-				// na := strings.Trim(nvs[0], " ")
-				// va := strings.Trim(nvs[1], " ")
-				// if na == "name_ref" {
-					// name_ref = va
-				// }else if na == "bucket" {
-					// bucket = va
-				// }else if na == "path" {
-					// path = va
-				// }
-			// }
-		// }
-		// name = strings.Trim(name[0: m] + name[n + 1: len(name)], " ")
-	// }
-	// if name == "" {
-		// var msg = "volume name can't be nil!---2"
-		// fmt.Printf("%c[1;0;31merror: Create volume: %s%c[0m\n",0x1B, msg, 0x1B)
-		// return errors.New(msg)
-	// }
-	
-	// if name_ref == "" {
-		// var msg = "name_ref can't be nil!"
-		// fmt.Printf("%c[1;0;31merror: Create volume: %s%c[0m\n",0x1B, msg, 0x1B)
-		// return errors.New(msg)
-	// }
-	// if bucket == "" {
-		// var msg = "oss's bucket can't be nil"
-		// fmt.Printf("%c[1;0;31merror: Create volume: %s%c[0m\n",0x1B, msg, 0x1B)
-		// return errors.New(msg)
-	// }
-	// if path == "" {
-		// path = "/"
-	// }
-	
 	
 	client, ok := d.clients[name_ref]
 	if client == nil || !ok {
@@ -253,22 +177,7 @@ func (d ALiOssVolumeDriver) BuildVolume(name string, name_ref string, bucket str
                 fmt.Printf("%c[1;0;31merror:  Create volume: %s%c[0m\n",0x1B, msg, 0x1B)
                 panic(err)
                 return errors.New(msg)
-        }
-		
-	// oss bucket path handle
-	reg := regexp.MustCompile(`[/\\]+`)
-	path = reg.ReplaceAllString(path, string(os.PathSeparator))
-	fmt.Printf("%c[1;0;31minfo: path_pre_handel Create volume: %s%c[0m\n",0x1B, path, 0x1B)
-	
-	if path != string(os.PathSeparator) {
-		if path[0] == os.PathSeparator {
-			path = path[1: len(path)]
-		}
-		if path[len(path)-1] != os.PathSeparator {
-			path = path + string(os.PathSeparator)
-		}
-	}
-	fmt.Printf("%c[1;0;31minfo: path_post_handel Create volume: %s%c[0m\n",0x1B, path, 0x1B)
+        }		
 
 	d.mutex.Lock()
 	defer d.mutex.Unlock()
