@@ -125,7 +125,7 @@ func NewALiOssVolumeDriver(mount string, driver string, debug bool) volume.Drive
 func (d ALiOssVolumeDriver) Create(req *volume.CreateRequest) error {
 
 	optionsJson,_ :=json.Marshal(req.Options)
-	optionsStr :=string(mjson)
+	optionsStr :=string(optionsJson)
 
 	name_ref := req.Options["name_ref"]		
 	if name_ref == "" {
@@ -134,35 +134,35 @@ func (d ALiOssVolumeDriver) Create(req *volume.CreateRequest) error {
 		return errors.New(msg + "\n" + optionsStr)
 	}
 	
-	//endpoint := req.Options["endpoint"]
+	endpoint := req.Options["endpoint"]
 	if endpoint == "" {
 		var msg = "endpoint can't be nil!"
 		fmt.Printf("%c[1;0;31merror: Create volume: %s%c[0m\n",0x1B, msg, 0x1B)
 		return errors.New(msg)
 	}
 	
-	//ak := req.Options["ak"]
+	ak := req.Options["ak"]
 	if ak == "" {
 		var msg = "AccessKey_ID can't be nil!"
 		fmt.Printf("%c[1;0;31merror: Create volume: %s%c[0m\n",0x1B, msg, 0x1B)
 		return errors.New(msg)
 	}
 
-	//sk := req.Options["sk"]
+	sk := req.Options["sk"]
 	if sk == "" {
 		var msg = "AccessKey_Secret can't be nil!"
 		fmt.Printf("%c[1;0;31merror: Create volume: %s%c[0m\n",0x1B, msg, 0x1B)
 		return errors.New(msg)
 	}
 	
-	//bucket := req.Options["bucket"]
+	bucket := req.Options["bucket"]
 	if bucket == "" {
 		var msg = "oss's bucket can't be nil"
 		fmt.Printf("%c[1;0;31merror: Create volume: %s%c[0m\n",0x1B, msg, 0x1B)
 		return errors.New(msg)
 	}
 		
-    //path := req.Options["path"]
+    path := req.Options["path"]
 	if path == "" {
 		path = "/"
 	}
